@@ -15,11 +15,13 @@ import QueryDownloadWidget from "metabase/query_builder/components/QueryDownload
 import { SERVER_ERROR_TYPES } from "metabase/lib/errors";
 
 import ModalWithTrigger from "metabase/components/ModalWithTrigger";
+import PopoverWithTrigger from "metabase/components/PopoverWithTrigger";
 import { ChartSettingsWithState } from "metabase/visualizations/components/ChartSettings";
 import WithVizSettingsData from "metabase/visualizations/hoc/WithVizSettingsData";
 
 import Icon, { iconPropTypes } from "metabase/components/Icon";
 import Tooltip from "metabase/components/Tooltip";
+import { SelectList } from "metabase/components/select-list";
 
 import { isVirtualDashCard } from "metabase/dashboard/utils";
 import DashCardParameterMapper from "./DashCardParameterMapper";
@@ -200,12 +202,16 @@ export default class DashCard extends Component {
         {isEditingDashboardLayout ? (
           <DashboardCardActionsPanel onMouseDown={this.preventDragging}>
             <DashCardActionButtons
+              card={mainCard}
               series={series}
               isLoading={loading}
               isVirtualDashCard={isVirtualDashCard(dashcard)}
               hasError={!!errorMessage}
               onRemove={onRemove}
               onAddSeries={onAddSeries}
+              onUpdateVisualizationSettings={
+                this.props.onUpdateVisualizationSettings
+              }
               onReplaceAllVisualizationSettings={
                 this.props.onReplaceAllVisualizationSettings
               }
@@ -215,6 +221,7 @@ export default class DashCard extends Component {
               isPreviewing={this.state.isPreviewingCard}
               onPreviewToggle={this.handlePreviewToggle}
               dashboard={dashboard}
+              metadata={metadata}
             />
           </DashboardCardActionsPanel>
         ) : null}
@@ -324,17 +331,20 @@ const DashboardCardActionsPanel = styled.div`
 `;
 
 const DashCardActionButtons = ({
+  card,
   series,
   isLoading,
   isVirtualDashCard,
   hasError,
   onRemove,
   onAddSeries,
+  onUpdateVisualizationSettings,
   onReplaceAllVisualizationSettings,
   showClickBehaviorSidebar,
   onPreviewToggle,
   isPreviewing,
   dashboard,
+  metadata,
 }) => {
   const buttons = [];
 
@@ -388,6 +398,18 @@ const DashCardActionButtons = ({
     }
   }
 
+  if (card.display === "actions") {
+    buttons.push(
+      <ConnectActionsButton
+        key="connect-actions"
+        card={card}
+        dashboard={dashboard}
+        metadata={metadata}
+        onUpdateVisualizationSettings={onUpdateVisualizationSettings}
+      />,
+    );
+  }
+
   return (
     <span className="flex align-center text-medium" style={{ lineHeight: 1 }}>
       {buttons}
@@ -395,6 +417,55 @@ const DashCardActionButtons = ({
         <RemoveButton className="ml1" onRemove={onRemove} />
       </Tooltip>
     </span>
+  );
+};
+
+const ConnectActionsButton = ({
+  card,
+  dashboard,
+  metadata,
+  onUpdateVisualizationSettings,
+}) => {
+  const connectedTableId = card.visualization_settings["actions.linked_table"];
+
+  const tables = dashboard.ordered_cards
+    .map(dashCard => dashCard.card)
+    .filter(
+      card =>
+        !!card.dataset_query.database && card.dataset_query.type === "query",
+    )
+    .map(card => card.dataset_query.query["source-table"])
+    .map(tableId => metadata.table(tableId))
+    .filter(Boolean);
+
+  return (
+    <PopoverWithTrigger
+      triggerElement={
+        <Tooltip tooltip={t`Connect table`}>
+          <Icon
+            name="bolt"
+            size={HEADER_ICON_SIZE}
+            style={HEADER_ACTION_STYLE}
+          />
+        </Tooltip>
+      }
+    >
+      <SelectList>
+        {tables.map(table => (
+          <SelectList.Item
+            key={table.id}
+            name={table.displayName()}
+            icon="table"
+            isSelected={table.id === connectedTableId}
+            onSelect={() =>
+              onUpdateVisualizationSettings({
+                "actions.linked_table": table.id,
+              })
+            }
+          />
+        ))}
+      </SelectList>
+    </PopoverWithTrigger>
   );
 };
 
