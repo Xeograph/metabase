@@ -7,6 +7,41 @@ import { closeObjectDetail } from "metabase/query_builder/actions/object-detail"
 
 import { DashCard } from "metabase-types/types/Dashboard";
 
+export type InsertRowPayload = {
+  table: Table;
+  values: { [key: string]: unknown };
+};
+
+export const createRow = (payload: InsertRowPayload) => {
+  const { table, values } = payload;
+  return MetabaseApi.actions.create({
+    type: "query",
+    database: table.db_id,
+    query: {
+      "source-table": table.id,
+    },
+    create_row: values,
+  });
+};
+
+export type InsertRowFromDataAppPayload = InsertRowPayload & {
+  dashCard: DashCard;
+};
+
+export const createRowFromDataApp = (payload: InsertRowFromDataAppPayload) => {
+  return async (dispatch: any) => {
+    const result = await createRow(payload);
+    if (result?.["created-row"]?.id) {
+      const { dashCard } = payload;
+      dispatch(
+        fetchCardData(dashCard.card, dashCard, {
+          reload: true,
+          ignoreCache: true,
+        }),
+      );
+    }
+  };
+};
 export type DeleteRowPayload = {
   table: Table;
   id: number | string;
