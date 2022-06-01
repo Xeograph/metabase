@@ -225,7 +225,7 @@ export function ObjectDetailFn({
     [zoomedRowID, followForeignKey],
   );
 
-  const database = question.database()?.getPlainObject?.();
+  const database = question?.database()?.getPlainObject?.();
   const canEdit = !!(
     table &&
     isWritebackEnabled &&
