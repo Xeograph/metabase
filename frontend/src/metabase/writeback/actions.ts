@@ -1,7 +1,11 @@
 import { MetabaseApi } from "metabase/services";
 import Table from "metabase-lib/lib/metadata/Table";
+
+import { fetchCardData } from "metabase/dashboard/actions";
 import { runQuestionQuery } from "metabase/query_builder/actions/querying";
 import { closeObjectDetail } from "metabase/query_builder/actions/object-detail";
+
+import { DashCard } from "metabase-types/types/Dashboard";
 
 export type DeleteRowPayload = {
   table: Table;
@@ -36,6 +40,25 @@ export const deleteRowFromObjectDetail = (payload: DeleteRowPayload) => {
     if (result?.["rows-deleted"]?.length > 0) {
       dispatch(closeObjectDetail());
       dispatch(runQuestionQuery());
+    }
+  };
+};
+
+export type DeleteRowFromDataAppPayload = DeleteRowPayload & {
+  dashCard: DashCard;
+};
+
+export const deleteRowFromDataApp = (payload: DeleteRowFromDataAppPayload) => {
+  return async (dispatch: any) => {
+    const result = await deleteRow(payload);
+    if (result?.["rows-deleted"]?.length > 0) {
+      const { dashCard } = payload;
+      dispatch(
+        fetchCardData(dashCard.card, dashCard, {
+          reload: true,
+          ignoreCache: true,
+        }),
+      );
     }
   };
 };
