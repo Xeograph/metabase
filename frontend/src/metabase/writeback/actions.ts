@@ -42,6 +42,51 @@ export const createRowFromDataApp = (payload: InsertRowFromDataAppPayload) => {
     }
   };
 };
+
+export type UpdateRowPayload = {
+  table: Table;
+  id: number | string;
+  values: { [key: string]: unknown };
+};
+
+export const updateRow = (payload: UpdateRowPayload) => {
+  const { table, id, values } = payload;
+  const field = table.fields.find(field => field.isPK());
+  if (!field) {
+    throw new Error("Cannot update row from table without a primary key");
+  }
+
+  const pk = field.isNumeric() && typeof id === "string" ? parseInt(id) : id;
+  return MetabaseApi.actions.update({
+    type: "query",
+    database: table.db_id,
+    query: {
+      "source-table": table.id,
+      filter: ["=", field.reference(), pk],
+    },
+    update_row: values,
+  });
+};
+
+export type UpdateRowFromDataAppPayload = UpdateRowPayload & {
+  dashCard: DashCard;
+};
+
+export const updateRowFromDataApp = (payload: UpdateRowFromDataAppPayload) => {
+  return async (dispatch: any) => {
+    const result = await updateRow(payload);
+    if (result?.["rows-updated"]?.length > 0) {
+      const { dashCard } = payload;
+      dispatch(
+        fetchCardData(dashCard.card, dashCard, {
+          reload: true,
+          ignoreCache: true,
+        }),
+      );
+    }
+  };
+};
+
 export type DeleteRowPayload = {
   table: Table;
   id: number | string;

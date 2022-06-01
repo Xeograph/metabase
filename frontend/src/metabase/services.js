@@ -346,6 +346,7 @@ export const MetabaseApi = {
 
   actions: {
     create: POST("/api/actions/row/create"),
+    update: POST("/api/actions/row/update"),
     deleteRow: POST("/api/actions/row/delete"),
   },
 };
