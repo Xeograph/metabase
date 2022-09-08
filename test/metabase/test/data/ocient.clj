@@ -170,8 +170,8 @@
 
 (def ^:private db-connection-details
   (delay
-   {:host     (tx/db-test-env-var :ocient :host "tableau-sim.corp.ocient.com")
-    :port     (tx/db-test-env-var :ocient :port "7050")
+   {:host     (tx/db-test-env-var :ocient :host "localhost")
+    :port     (tx/db-test-env-var :ocient :port "4050")
     :user     (tx/db-test-env-var :ocient :user "admin@system")
     :password (tx/db-test-env-var :ocient :password "admin")
     :additional-options "loglevel=TRACE;logfile=/tmp/ocient_jdbc.log;pooling=OFF;force=true"}))
