@@ -159,7 +159,7 @@
 
 
  :paths
- ["src" "shared/src" "resources"]
+ ["src" "test" "shared/src" "resources" "dev/src" "local/src" "shared/test" "test_resources" "test_config"]
 
  :aliases
  {
@@ -227,6 +227,17 @@
   ;; clojure -M:run:ee (include EE code)
   :run
   {:main-opts ["-m" "metabase.core"]
+
+  :extra-deps {
+    eftest/eftest                                         {:mvn/version "0.5.9"}
+    pjstadig/humane-test-output                           {:mvn/version "0.11.0"}
+  }
+  :source-paths ["test" "src"  "shared/src" "resources"  "dev/src" "local/src" "shared/test" "test_resources" "test_config"]
+
+;;  :classpath-overrides
+;;  {metabase.test-runner "/ocient/metabase_cp/test/metabase/test_runner.clj"}
+  ;;/test-runner
+
    :jvm-opts  ["-Dmb.run.mode=dev"
                "-Djava.awt.headless=true"                   ; prevent Java icon from randomly popping up in macOS dock
                "-Dmb.jetty.port=3000"]}
@@ -249,7 +260,24 @@
 
   ;; these aliases exist for symmetry with the ee aliases. Empty for now.
   :oss
-  {}
+  {
+      :extra-deps {
+    eftest/eftest                                         {:mvn/version "0.5.9"}
+    pjstadig/humane-test-output                           {:mvn/version "0.11.0"}
+
+clj-http-fake/clj-http-fake                           {:mvn/version "1.0.3"
+                                                           :exclusions  [slingshot/slingshot]}
+    cloverage/cloverage                                   {:mvn/version "1.2.2"}
+    jonase/eastwood                                       {:mvn/version "1.2.2"}
+    lein-check-namespace-decls/lein-check-namespace-decls {:mvn/version "1.0.4"} ; misnomer since this works on Clojure CLI now too
+    reifyhealth/specmonstah                               {:mvn/version "2.0.0"
+                                                           :exclusions  [org.clojure/clojure
+                                                                         org.clojure/clojurescript]}
+    ring/ring-mock                                        {:mvn/version "0.4.0"}
+    talltale/talltale                                     {:mvn/version "0.5.8"}
+
+  }
+  }
 
   :oss-dev
   {}
@@ -411,10 +439,16 @@
   ;; clojure -T:build uberjar
   ;; clojure -T:build uberjar :edition :ee
   :build
-  {:deps       {io.github.clojure/tools.build   {:git/tag "v0.7.5" :git/sha "2526f58"}
+  {
+  :deps       {io.github.clojure/tools.build   {:git/tag "v0.7.5" :git/sha "2526f58"}
                 com.github.seancorfield/depstar {:mvn/version "2.1.303"}
                 metabase/build.common           {:local/root "bin/common"}
-                metabase/buid-mb                {:local/root "bin/build-mb"}}
+                metabase/buid-mb                {:local/root "bin/build-mb"}
+                eftest/eftest                                         {:mvn/version "0.5.9"}
+                pjstadig/humane-test-output                           {:mvn/version "0.11.0"}
+                }
+  :source-paths ["." "test" "src"  "shared/src" "resources"  "dev/src" "local/src" "shared/test" "test_resources" "test_config"]
+  :extra-paths ["."]
    :ns-default build}
 
 ;;; Other misc convenience aliases

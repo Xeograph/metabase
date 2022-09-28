@@ -3,6 +3,8 @@
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
             [clojure.tools.trace :as trace]
+            [metabase.driver.ocient-test :as ocient-test]
+            [metabase.test-runner :as runner]
             [java-time :as t]
             [metabase.config :as config]
             [metabase.core.initialization-status :as init-status]
@@ -178,6 +180,13 @@
   "Launch Metabase in standalone mode."
   [& [cmd & args]]
   (maybe-enable-tracing)
-  (if cmd
-    (run-cmd cmd args) ; run a command like `java -jar metabase.jar migrate release-locks` or `clojure -M:run migrate release-locks`
-    (start-normally))) ; with no command line args just start Metabase normally
+  (println "mainnnnn----------------------------------")
+  ;; (run-all-tests)
+  (runner/run-tests {:only (symbol "metabase.driver.ocient-test")})
+  ;; (runner/run-tests {})
+
+  ;; (if cmd
+  ;;   (run-cmd cmd args) ; run a command like `java -jar metabase.jar migrate release-locks` or `clojure -M:run migrate release-locks`
+  ;;   (start-normally))) ; with no command line args just start Metabase normally
+
+)

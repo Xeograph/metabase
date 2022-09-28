@@ -77,8 +77,9 @@
      ~@body))
 
 (define-initialization :plugins
-  (classloader/require 'metabase.test.initialize.plugins)
-  ((resolve 'metabase.test.initialize.plugins/init!)))
+  (when-not *compile-files*
+    (classloader/require 'metabase.test.initialize.plugins)
+    ((resolve 'metabase.test.initialize.plugins/init!))))
 
 ;; initialize test drivers that are not shipped as part of the product
 ;; this is needed because if DRIVERS=all in the environment, then only the directories within modules are searched to
