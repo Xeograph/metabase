@@ -174,7 +174,7 @@
     :port     (tx/db-test-env-var :ocient :port "7050")
     :user     (tx/db-test-env-var :ocient :user "admin@system")
     :password (tx/db-test-env-var :ocient :password "admin")
-    :additional-options "loglevel=TRACE;logfile=/tmp/ocient_jdbc.log;pooling=OFF;force=true"}))
+    :additional-options "loglevel=TRACE;logfile=/tmp/ocient_jdbc.log;statementPooling=OFF;force=true"}))
 
 (defmethod tx/dbdef->connection-details :ocient
   [driver context {:keys [database-name]}]
