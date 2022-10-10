@@ -77,6 +77,7 @@
      ~@body))
 
 (define-initialization :plugins
+  ;; Wait until runtime to initialize the plugins, only relevant for uberjar
   (when-not *compile-files*
     (classloader/require 'metabase.test.initialize.plugins)
     ((resolve 'metabase.test.initialize.plugins/init!))))

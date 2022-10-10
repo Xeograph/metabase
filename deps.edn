@@ -234,10 +234,6 @@
   }
   :source-paths ["test" "src"  "shared/src" "resources"  "dev/src" "local/src" "shared/test" "test_resources" "test_config"]
 
-;;  :classpath-overrides
-;;  {metabase.test-runner "/ocient/metabase_cp/test/metabase/test_runner.clj"}
-  ;;/test-runner
-
    :jvm-opts  ["-Dmb.run.mode=test"
                "-Djava.awt.headless=true"                   ; prevent Java icon from randomly popping up in macOS dock
                "-Dmb.db.in.memory=true"
