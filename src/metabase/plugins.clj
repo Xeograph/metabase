@@ -156,7 +156,10 @@
 
 (defn- load! []
   (log/info (trs "Loading plugins in {0}..." (str (plugins-dir))))
-  (extract-system-modules!)
+  ;; Force an error for a missing Ocient metabase driver jar
+  ;; If this is left uncommented, then a missing jar file would be generated from the source code in this uberjar
+  ;; JDBC driver will error either way if jar file is missing
+  ;; (extract-system-modules!)
   (let [paths (plugins-paths)]
     (init-plugins! paths))
   (when (or config/is-dev? config/is-test?)

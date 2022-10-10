@@ -25,7 +25,9 @@
             [metabase.troubleshooting :as troubleshooting]
             [metabase.util :as u]
             [metabase.util.i18n :refer [deferred-trs trs]]
-            [toucan.db :as db]))
+            [toucan.db :as db]
+            [eftest.report :refer [report-to-file]]
+            [eftest.report.junit :as ju]))
 
   ;; Load up the drivers shipped as part of the main codebase, so they will show up in the list of available DB types
 (comment metabase.driver.h2/keep-me
@@ -178,12 +180,12 @@
 
 (defn -main
   "Launch Metabase in standalone mode."
-  [& [cmd & args]]
+  [& args]
   (maybe-enable-tracing)
-  (println "mainnnnn----------------------------------")
-  ;; (run-all-tests)
-  (runner/run-tests {:only (symbol "metabase.driver.ocient-test")})
-  ;; (runner/run-tests {})
+  (if (and (seq args) (= (first (seq args)) "ocient-only"))
+    (runner/run-tests {:only (symbol "metabase.driver.ocient-test")})
+    (runner/run-tests {:only (mapv symbol (str/split (slurp (clojure.java.io/resource "namespaces.txt")) #"\n"))}))
+    ;; (runner/run-tests {:only ["local/src", "dev/src", "shared/test", "resources", "src", "test", "shared/src", "test_resources", "test_config"]}) ;;  Used to replace the line above when running 'DRIVERS=ocient clojure -M:dev:run'
 
   ;; (if cmd
   ;;   (run-cmd cmd args) ; run a command like `java -jar metabase.jar migrate release-locks` or `clojure -M:run migrate release-locks`

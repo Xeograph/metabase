@@ -238,9 +238,14 @@
 ;;  {metabase.test-runner "/ocient/metabase_cp/test/metabase/test_runner.clj"}
   ;;/test-runner
 
-   :jvm-opts  ["-Dmb.run.mode=dev"
+   :jvm-opts  ["-Dmb.run.mode=test"
                "-Djava.awt.headless=true"                   ; prevent Java icon from randomly popping up in macOS dock
-               "-Dmb.jetty.port=3000"]}
+               "-Dmb.db.in.memory=true"
+               "-Dmb.jetty.join=false"
+               "-Dmb.field.filter.operators.enabled=true"
+               "-Dmb.api.key=test-api-key"
+               ;; Different port from normal `:dev` so you can run tests on a different server.
+               "-Dmb.jetty.port=3001"]}
 
   ;; alias for CI-specific options.
   :ci
