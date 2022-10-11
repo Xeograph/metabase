@@ -105,6 +105,19 @@
                              (trs "spark-deps.jar is no longer needed by Metabase 0.32.0+. You can delete it from the plugins directory."))))]
     path))
 
+(defn- check-for-ocient-metabase-driver []
+  (let [contains-driver (some true? (mapv #(and (u.files/regular-file? %)
+                                                (u.files/readable? %)
+                                                (str/ends-with? (.getFileName %) ".jar")
+                                                (str/starts-with? (.getFileName %) "ocient.metabase-driver"))
+                                      (u.files/files-seq (plugins-dir))))]
+
+    (if (= contains-driver nil)
+      (throw (Exception. "Plugins directory does not contain 'ocient.metabase-driver.jar'"))
+    )
+  )
+)
+
 (when (or config/is-dev? config/is-test?)
   (defn- load-local-plugin-manifest! [^Path path]
     (some-> (slurp (str path)) yaml.core/parse-string plugins.init/init-plugin-with-info!))
@@ -157,9 +170,12 @@
 (defn- load! []
   (log/info (trs "Loading plugins in {0}..." (str (plugins-dir))))
   ;; Force an error for a missing Ocient metabase driver jar
-  ;; If this is left uncommented, then a missing jar file would be generated from the source code in this uberjar
+  ;; Otherwise, a missing jar file would be generated from the source code in this uberjar
+  ;; which could be confusing for testing purposes
   ;; JDBC driver will error either way if jar file is missing
-  ;; (extract-system-modules!)
+  (check-for-ocient-metabase-driver)
+
+  (extract-system-modules!)
   (let [paths (plugins-paths)]
     (init-plugins! paths))
   (when (or config/is-dev? config/is-test?)
