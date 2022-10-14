@@ -35,10 +35,6 @@
   ;; Ocient is always in UTC
   "UTC")
 
-(defn- ->timestamp [honeysql-form]
-  ;; Cast time columns to timestamps
-  (hx/cast-unless-type-in "timestamp" #{"timestamp" "date" "time"} honeysql-form))
-
 (defmethod driver/db-start-of-week :ocient
   [_]
   ;; From the Ocient user docs for WEEK()
@@ -149,7 +145,7 @@
 (defmethod sql-jdbc.execute/read-column-thunk [:ocient Types/TIMESTAMP]
   [_ rs _ i]
   (fn []
-    (let [d (.getObject rs i)]
+    (let [d (.getTimestamp ^java.sql.ResultSet rs ^Integer i)]
       (if (nil? d)
         nil
         (.toLocalDateTime d)))))
@@ -157,20 +153,20 @@
 (defmethod sql-jdbc.execute/read-column-thunk [:ocient Types/DATE]
   [_ rs _ i]
   (fn []
-    (.toLocalDate (.getObject rs i))))
+    (.toLocalDate (.getDate ^java.sql.ResultSet rs ^Integer i))))
 
 (defmethod sql-jdbc.execute/read-column-thunk [:ocient Types/TIME]
   [_ rs _ i]
   ;; XGTime values are ALWAYS in UTC
   (fn []
-    (let [utc-str (.toString (.getObject rs i))]
+    (let [utc-str (.toString (.getTime ^java.sql.ResultSet rs ^Integer i))]
       (LocalTime/parse utc-str))))
 
 (defmethod sql-jdbc.execute/read-column-thunk [:ocient Types/TIMESTAMP_WITH_TIMEZONE]
   [_ rs _ i]
   ;; XGTimestamp values are ALWAYS in UTC
   (fn []
-    (let [local-date-time    (.toLocalDateTime (.getObject rs i))
+    (let [local-date-time    (.toLocalDateTime (.getTimestamp ^java.sql.ResultSet rs ^Integer i))
           zone-id            (ZoneId/of "UTC")]
       (OffsetDateTime/of local-date-time zone-id))))
 
@@ -178,7 +174,7 @@
   [_ rs _ i]
   ;; XGTime values are ALWAYS in UTC
   (fn []
-    (let [utc-str (.toString (.getObject rs i))]
+    (let [utc-str (.toString (.getTime ^java.sql.ResultSet rs ^Integer i))]
       (LocalTime/parse utc-str))))
 
 (defmethod sql-jdbc.execute/set-parameter [:ocient java.time.OffsetDateTime]
@@ -211,10 +207,6 @@
 ; ;;; +----------------------------------------------------------------------------------------------------------------+
 ; ;;; |                                         metabase.driver.sql impls                                              |
 ; ;;; +----------------------------------------------------------------------------------------------------------------+
-
-;; Extract a component from a timestamp or date.
-#_{:clj-kondo/ignore [:unused-private-var]}
-(defn- extract    [unit expr] (hsql/call :extract unit (hx/->timestamp expr)))
 
 ;; Returns the date or timestamp entered, truncated to the specified precision.
 (defn- date-trunc [unit expr] (hsql/call :date_trunc (hx/literal unit) (hx/->timestamp expr)))
