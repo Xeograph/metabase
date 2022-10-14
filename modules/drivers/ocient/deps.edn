@@ -1,1 +1,8 @@
-{:paths                         ["src" "resources"] }
+{:paths 
+ ["src" "resources"]
+
+ :mvn/repos
+ {"sonatype" {:url "https://oss.sonatype.org/content/groups/staging/"}}
+
+ :deps
+ {com.ocient/ocient-jdbc4$jar-with-dependencies {:mvn/version "2.82"}}}
