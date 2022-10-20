@@ -12,7 +12,8 @@
             [metabase.query-processor.pivot :as qp.pivot]
             [metabase.test :as mt]
             [metabase.util :as u]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [metabase.test.data.interface :as tx]))
 
 (deftest group-bitmask-test
   (doseq [[indices expected] {[0]     6
@@ -101,10 +102,11 @@
        :pivot-cols []})))
 
 (deftest allow-snake-case-test
-  (testing "make sure the stuff works with either normal lisp-case keys or snake_case"
-    (is (= (mt/rows (qp.pivot/run-pivot-query (test-query)))
-           (mt/rows (qp.pivot/run-pivot-query (set/rename-keys (test-query)
-                                                               {:pivot-rows :pivot_rows, :pivot-cols :pivot_cols})))))))
+  (when-not (= (tx/db-test-env-var-or-throw :ocient :mode "extended") "minimal") ;; Only run test if loading sample-dataset
+    (testing "make sure the stuff works with either normal lisp-case keys or snake_case"
+      (is (= (mt/rows (qp.pivot/run-pivot-query (test-query)))
+            (mt/rows (qp.pivot/run-pivot-query (set/rename-keys (test-query)
+                                                                {:pivot-rows :pivot_rows, :pivot-cols :pivot_cols}))))))))
 
 (deftest generate-queries-test
   (mt/test-drivers (api.pivots/applicable-drivers)
@@ -155,32 +157,33 @@
             (is (= expected actual))))))))
 
 (deftest dont-return-too-many-rows-test
-  (testing "Make sure pivot queries don't return too many rows (#14329)"
-    (let [results (qp.pivot/run-pivot-query (test-query))
-          rows    (mt/rows results)]
-      (is (= ["Product → Category"
-              "User → Source"
-              "Created At"
-              "pivot-grouping"
-              "Count"]
-             (map :display_name (mt/cols results))))
-      (is (apply distinct? rows))
-      (is (= [["Doohickey" "Facebook" "2019-01-01T00:00:00Z" 0  263]
-              ["Doohickey" "Facebook" "2020-01-01T00:00:00Z" 0  89]
-              ["Doohickey" "Google"   "2019-01-01T00:00:00Z" 0  276]
-              ["Doohickey" "Google"   "2020-01-01T00:00:00Z" 0  100]
-              ["Gizmo"     "Facebook" "2019-01-01T00:00:00Z" 0  361]
-              ["Gizmo"     "Facebook" "2020-01-01T00:00:00Z" 0  113]
-              ["Gizmo"     "Google"   "2019-01-01T00:00:00Z" 0  325]
-              ["Gizmo"     "Google"   "2020-01-01T00:00:00Z" 0  101]
-              ["Doohickey" "Facebook" nil                    4  352]
-              ["Doohickey" "Google"   nil                    4  376]
-              ["Gizmo"     "Facebook" nil                    4  474]
-              ["Gizmo"     "Google"   nil                    4  426]
-              ["Doohickey" nil        nil                    6  728]
-              ["Gizmo"     nil        nil                    6  900]
-              [nil         nil        nil                    7  1628]]
-             rows)))))
+  (when-not (= (tx/db-test-env-var-or-throw :ocient :mode "extended") "minimal") ;; Only run test if loading sample-dataset
+    (testing "Make sure pivot queries don't return too many rows (#14329)"
+      (let [results (qp.pivot/run-pivot-query (test-query))
+            rows    (mt/rows results)]
+        (is (= ["Product → Category"
+                "User → Source"
+                "Created At"
+                "pivot-grouping"
+                "Count"]
+              (map :display_name (mt/cols results))))
+        (is (apply distinct? rows))
+        (is (= [["Doohickey" "Facebook" "2019-01-01T00:00:00Z" 0  263]
+                ["Doohickey" "Facebook" "2020-01-01T00:00:00Z" 0  89]
+                ["Doohickey" "Google"   "2019-01-01T00:00:00Z" 0  276]
+                ["Doohickey" "Google"   "2020-01-01T00:00:00Z" 0  100]
+                ["Gizmo"     "Facebook" "2019-01-01T00:00:00Z" 0  361]
+                ["Gizmo"     "Facebook" "2020-01-01T00:00:00Z" 0  113]
+                ["Gizmo"     "Google"   "2019-01-01T00:00:00Z" 0  325]
+                ["Gizmo"     "Google"   "2020-01-01T00:00:00Z" 0  101]
+                ["Doohickey" "Facebook" nil                    4  352]
+                ["Doohickey" "Google"   nil                    4  376]
+                ["Gizmo"     "Facebook" nil                    4  474]
+                ["Gizmo"     "Google"   nil                    4  426]
+                ["Doohickey" nil        nil                    6  728]
+                ["Gizmo"     nil        nil                    6  900]
+                [nil         nil        nil                    7  1628]]
+              rows))))))
 
 (defn- distinct-values [table col]
   (->> (mt/rows
@@ -194,34 +197,36 @@
        set))
 
 (deftest return-correct-columns-test
-  (let [results (qp.pivot/run-pivot-query (api.pivots/pivot-query))
-        rows    (mt/rows results)]
-    (testing "Columns should come back in the expected order"
-      (is (= ["User → State"
-              "User → Source"
-              "Product → Category"
-              "pivot-grouping"
-              "Count"
-              "Sum of Quantity"]
-             (map :display_name (mt/cols results)))))
-    (testing "Rows should have the correct shape"
-      (let [Row [(s/one (s/maybe (apply s/enum (distinct-values :people   :state)))    "state")
-                 (s/one (s/maybe (apply s/enum (distinct-values :people   :source)))   "source")
-                 (s/one (s/maybe (apply s/enum (distinct-values :products :category))) "category")
-                 (s/one (s/enum 0 1 3 4 5 7)                                           "pivot group bitmask")
-                 (s/one s/Int                                                          "count")
-                 (s/one s/Int                                                          "sum")]]
-        (is (schema= [Row]
-                     rows))))))
+  (when-not (= (tx/db-test-env-var-or-throw :ocient :mode "extended") "minimal") ;; Only run test if loading sample-dataset
+    (let [results (qp.pivot/run-pivot-query (api.pivots/pivot-query))
+          rows    (mt/rows results)]
+      (testing "Columns should come back in the expected order"
+        (is (= ["User → State"
+                "User → Source"
+                "Product → Category"
+                "pivot-grouping"
+                "Count"
+                "Sum of Quantity"]
+              (map :display_name (mt/cols results)))))
+      (testing "Rows should have the correct shape"
+        (let [Row [(s/one (s/maybe (apply s/enum (distinct-values :people   :state)))    "state")
+                  (s/one (s/maybe (apply s/enum (distinct-values :people   :source)))   "source")
+                  (s/one (s/maybe (apply s/enum (distinct-values :products :category))) "category")
+                  (s/one (s/enum 0 1 3 4 5 7)                                           "pivot group bitmask")
+                  (s/one s/Int                                                          "count")
+                  (s/one s/Int                                                          "sum")]]
+          (is (schema= [Row]
+                      rows)))))))
 
 (deftest allow-other-rfs-test
-  (letfn [(rff [_]
-            (fn
-              ([] 0)
-              ([acc] acc)
-              ([acc _] (inc acc))))]
-    (is (= (count (mt/rows (qp.pivot/run-pivot-query (api.pivots/pivot-query))))
-           (qp.pivot/run-pivot-query (api.pivots/pivot-query) nil {:rff rff})))))
+  (when-not (= (tx/db-test-env-var-or-throw :ocient :mode "extended") "minimal") ;; Only run test if loading sample-dataset
+    (letfn [(rff [_]
+              (fn
+                ([] 0)
+                ([acc] acc)
+                ([acc _] (inc acc))))]
+      (is (= (count (mt/rows (qp.pivot/run-pivot-query (api.pivots/pivot-query))))
+            (qp.pivot/run-pivot-query (api.pivots/pivot-query) nil {:rff rff}))))))
 
 (deftest parameters-query-test
   (mt/dataset sample-dataset

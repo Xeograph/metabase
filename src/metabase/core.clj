@@ -183,10 +183,14 @@
   "Launch Metabase in standalone mode."
   [& args]
   (maybe-enable-tracing)
-  (if (= (tx/db-test-env-var-or-throw :ocient :mode "all-tests") "ocient-only") ;; Environment variable MB_OCIENT_TEST_MODE
-    (runner/run-tests {:only (symbol "metabase.driver.ocient-test") :report (report-to-file ju/report (tx/db-test-env-var-or-throw :ocient :reportpath "junit_report.xml"))}) ;; Evironment variable MB_OCIENT_TEST_REPORTPATH
-    (runner/run-tests {:only (mapv symbol (str/split (slurp (clojure.java.io/resource "namespaces.txt")) #"\n"))}))
-    ;; (runner/run-tests {:only ["local/src", "dev/src", "shared/test", "resources", "src", "test", "shared/src", "test_resources", "test_config"]}) ;;  Used to replace the line above when running 'DRIVERS=ocient clojure -M:dev:run'
+
+  (let [tests (str/split (slurp (clojure.java.io/resource "namespaces.txt")) #"\n")]
+    ;; (runner/run-tests {:only (symbol "metabase.driver.ocient-test") :report (report-to-file ju/report (tx/db-test-env-var-or-throw :ocient :reportpath "junit_report.xml"))}) ;; Evironment variable MB_OCIENT_TEST_REPORTPATH
+    ;; (runner/run-tests {:only ["local/src", "dev/src", "shared/test", "resources", "src", "test", "shared/src", "test_resources", "test_config"]}) ;;  Used to run 'DRIVERS=ocient clojure -M:dev:run'
+    (runner/run-tests {:only (mapv symbol tests)
+                       :report (report-to-file ju/report (tx/db-test-env-var-or-throw :ocient :reportpath "junit_report.xml"))})
+  )
+
 
 
   ;; (if cmd
