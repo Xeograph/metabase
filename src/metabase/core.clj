@@ -3,6 +3,8 @@
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
             [clojure.tools.trace :as trace]
+            [eftest.report :refer [report-to-file]]
+            [eftest.report.junit :as ju]
             [java-time :as t]
             [metabase.analytics.prometheus :as prometheus]
             [metabase.config :as config]
@@ -21,6 +23,8 @@
             [metabase.server.handler :as handler]
             [metabase.setup :as setup]
             [metabase.task :as task]
+            [metabase.test.data.interface :as tx]
+            [metabase.test-runner :as runner]
             [metabase.troubleshooting :as troubleshooting]
             [metabase.util :as u]
             [metabase.util.i18n :refer [deferred-trs trs]]
@@ -181,10 +185,23 @@
 
 ;;; ------------------------------------------------ App Entry Point -------------------------------------------------
 
+(defonce user-dir
+  (System/getProperty "user.dir"))
+
 (defn -main
   "Launch Metabase in standalone mode."
   [& [cmd & args]]
   (maybe-enable-tracing)
-  (if cmd
-    (run-cmd cmd args) ; run a command like `java -jar metabase.jar migrate release-locks` or `clojure -M:run migrate release-locks`
-    (start-normally))) ; with no command line args just start Metabase normally
+  (let 
+   [namespace-whitelist-path (tx/db-test-env-var :ocient :namespace-whitelist-path  (clojure.java.io/resource "namespace-whitelist.txt"))
+    namespace-blacklist-path (tx/db-test-env-var :ocient :namespace-blacklist-path nil)
+    junit-report-path (tx/db-test-env-var-or-throw :ocient :reportpath "junit_report.xml")
+    
+    namespace-whitelist (str/split (slurp namespace-whitelist-path) #"\n") 
+    namespace-blacklist (if (nil? namespace-blacklist-path)
+                          (set nil)
+                          (set (str/split (slurp namespace-blacklist-path) #"\n")))
+    
+    tests (remove #(contains? namespace-blacklist %) namespace-whitelist)]
+    (runner/run-tests {:only (mapv symbol tests)
+                       :report (report-to-file ju/report junit-report-path)}))) ; with no command line args just start Metabase normally

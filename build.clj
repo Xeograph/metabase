@@ -7,6 +7,8 @@
             [clojure.tools.namespace.find :as ns.find]
             [clojure.tools.namespace.parse :as ns.parse]
             [hf.depstar.api :as depstar]
+            [metabase.core]
+            [metabase.test-runner]
             [metabuild-common.core :as u])
   (:import java.io.OutputStream
            java.net.URI
@@ -78,6 +80,14 @@
           ns-decls (u/step "Determine compilation order for Metabase files"
                      (metabase-namespaces-in-topo-order basis))]
       (with-duration-ms [duration-ms]
+        ;; Clojure scans the source files to find tests. Compiling the uber jar
+        ;; changes the file structure, so we will scan for tests at compile time
+        ;; and store them in a file 'namespace-whitelist.txt' in the uberjar. 
+        ;; At runtime, this file will be used to run the tests.
+        (b/write-file {:path (str class-dir "/namespace-whitelist.txt")
+                       :string (clojure.string/join \newline
+                                                    (mapv #(subs (str %) 2)
+                                                          (metabase.test-runner/find-tests ["local/src", "dev/src", "shared/test", "resources", "src", "test", "shared/src", "test_resources", "test_config"])))})
         (b/compile-clj {:basis      basis
                         :src-dirs   paths
                         :class-dir  class-dir
