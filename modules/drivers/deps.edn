@@ -3,6 +3,7 @@
   metabase/druid              {:local/root "druid"}
   metabase/googleanalytics    {:local/root "googleanalytics"}
   metabase/mongo              {:local/root "mongo"}
+  metabase/ocient             {:local/root "ocient"}
   metabase/oracle             {:local/root "oracle"}
   metabase/presto             {:local/root "presto"}
   metabase/presto-common      {:local/root "presto-common"}

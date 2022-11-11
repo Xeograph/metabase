@@ -151,7 +151,9 @@
  ;; !!         PLEASE KEEP NEW DEPENDENCIES ABOVE ALPHABETICALLY ORGANIZED AND ADD COMMENTS EXPLAINING THEM.         !!
  ;; !!                            *PLEASE DO NOT* ADD NEW ONES TO THE BOTTOM OF THE LIST.                            !!
  ;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+  
+ :mvn/repos
+ {"sonatype" {:url "https://oss.sonatype.org/content/groups/staging/"}}
 
  :paths
  ["src" "test" "shared/src" "resources" "dev/src" "local/src" "shared/test" "test_resources" "test_config"]
@@ -292,6 +294,7 @@
     "modules/drivers/druid/test"
     "modules/drivers/googleanalytics/test"
     "modules/drivers/mongo/test"
+    "modules/drivers/ocient/test"
     "modules/drivers/oracle/test"
     "modules/drivers/presto/test"
     "modules/drivers/presto-common/test"
